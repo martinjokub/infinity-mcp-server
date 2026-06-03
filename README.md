@@ -25,6 +25,7 @@ Optional environment variables:
 - `INFINITY_API_VERSION`: defaults to `2026-04-20.morava`.
 - `TRANSPORT`: `stdio` by default, or `http`.
 - `PORT`: HTTP port, defaults to `3000`.
+- `MCP_AUTH_TOKEN`: optional bearer token required for HTTP `/mcp` requests when set.
 
 ## Local Configuration
 
@@ -55,6 +56,22 @@ http://127.0.0.1:3015/mcp
 ```
 
 The host binding is local-only (`127.0.0.1`) so the MCP endpoint is available on this machine without being exposed publicly.
+
+## Security
+
+Keep `.env` local and ignored. It contains the private Infinity token.
+
+For local Docker use, bind the published port to `127.0.0.1` as shown above. For shared, remote, or reverse-proxied deployments, set `MCP_AUTH_TOKEN` and configure MCP clients to send:
+
+```txt
+Authorization: Bearer your-mcp-auth-token
+```
+
+The `/health` endpoint remains public so container health checks do not need secrets. The `/mcp` endpoint requires the bearer token only when `MCP_AUTH_TOKEN` is configured.
+
+## Versioning
+
+This project uses semver-compatible versions in the form `x.x.y`. Treat the final number as the change counter requested for the project: increment it by `+1` for each update or edit unless a higher-level version bump is explicitly requested.
 
 ## Tools
 

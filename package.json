@@ -1,10 +1,29 @@
 {
   "name": "infinity-mcp-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for StartInfinity API access by agents",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/martinjokub/infinity-mcp-server.git"
+  },
+  "keywords": [
+    "infinity",
+    "startinfinity",
+    "mcp",
+    "model-context-protocol",
+    "agents"
+  ],
   "bin": {
     "infinity-mcp-server": "dist/index.js"
   },

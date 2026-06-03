@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import express from "express";
+import express, { type Request, type Response } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -13,7 +13,7 @@ import { registerWorkspaceTools } from "./tools/workspaces.js";
 function createServer(): McpServer {
   const server = new McpServer({
     name: "infinity-mcp-server",
-    version: "0.1.0",
+    version: "0.1.1",
   });
 
   registerProfileTools(server);
@@ -44,6 +44,10 @@ async function runHttp(): Promise<void> {
   });
 
   app.post("/mcp", async (req, res) => {
+    if (!authorizeMcpRequest(req, res)) {
+      return;
+    }
+
     const server = createServer();
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
@@ -71,6 +75,21 @@ function validateToken(): void {
     console.error("ERROR: INFINITY_API_TOKEN environment variable is required.");
     process.exit(1);
   }
+}
+
+function authorizeMcpRequest(req: Request, res: Response): boolean {
+  const expectedToken = process.env.MCP_AUTH_TOKEN;
+  if (!expectedToken) {
+    return true;
+  }
+
+  const authorization = req.header("authorization") ?? "";
+  if (authorization === `Bearer ${expectedToken}`) {
+    return true;
+  }
+
+  res.status(401).json({ error: "Unauthorized" });
+  return false;
 }
 
 const transport = process.env.TRANSPORT ?? "stdio";
