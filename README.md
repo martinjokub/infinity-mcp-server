@@ -11,10 +11,10 @@ https://github.com/martinjokub/infinity-agent-skills
 ## Setup
 
 ```powershell
-cd D:\AI\infinity\mcp
+cd path\to\infinity-mcp-server
 npm install
 npm run build
-$env:INFINITY_API_TOKEN = "your-token"
+$env:INFINITY_API_TOKEN = "your-infinity-token"
 npm start
 ```
 
@@ -26,17 +26,29 @@ Optional environment variables:
 - `TRANSPORT`: `stdio` by default, or `http`.
 - `PORT`: HTTP port, defaults to `3000`.
 
-## Docker Compose
+## Local Configuration
 
-The existing compose stack at `D:\AI\Docker\docker-compose.yml` includes this service as `infinity-mcp`.
+Copy the example environment file and edit it for your own machine:
 
 ```powershell
-cd D:\AI\Docker
-docker compose up -d --build infinity-mcp
-curl.exe http://127.0.0.1:3015/health
+Copy-Item .env.example .env
+notepad .env
 ```
 
-HTTP MCP endpoint:
+Do not commit `.env`. It contains your private Infinity API token.
+
+## Docker
+
+Build and run directly:
+
+```powershell
+docker build -t infinity-mcp-server .
+docker run --rm --env-file .env -p 127.0.0.1:3015:3000 infinity-mcp-server
+```
+
+Or copy `docker-compose.example.yml` into your own Docker Compose stack and adjust the paths, port, and environment file for your setup.
+
+Default local HTTP MCP endpoint when using the example port:
 
 ```txt
 http://127.0.0.1:3015/mcp

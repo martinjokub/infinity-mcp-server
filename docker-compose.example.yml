@@ -1,0 +1,19 @@
+services:
+  infinity-mcp:
+    build:
+      context: .
+    container_name: infinity-mcp
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - TRANSPORT=http
+      - PORT=3000
+    ports:
+      - "127.0.0.1:3015:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:3000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
