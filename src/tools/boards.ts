@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { InfinityClient } from "../services/infinityClient.js";
+import { getInfinityClient } from "../services/auth.js";
 import { errorResponse, omitUndefined, toolResponse } from "../services/format.js";
 import type { BoardBody } from "../types.js";
 import { BoardIdSchema, PaginationSchema, ResponseFormatSchema, WorkspaceIdSchema } from "./schemas.js";
@@ -17,7 +17,7 @@ export function registerBoardTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, response_format, ...pagination } = params;
-        const data = await new InfinityClient().listBoards(workspace_id, pagination);
+        const data = await getInfinityClient("infinity:read").listBoards(workspace_id, pagination);
         return toolResponse(data, response_format, "Infinity Boards");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -35,7 +35,7 @@ export function registerBoardTools(server: McpServer): void {
     },
     async ({ workspace_id, board_id, response_format }) => {
       try {
-        const data = await new InfinityClient().getBoard(workspace_id, board_id);
+        const data = await getInfinityClient("infinity:read").getBoard(workspace_id, board_id);
         return toolResponse(data, response_format, "Infinity Board");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -63,7 +63,7 @@ export function registerBoardTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, response_format, ...body } = params;
-        const data = await new InfinityClient().createBoard(workspace_id, omitUndefined(body) as BoardBody);
+        const data = await getInfinityClient("infinity:write").createBoard(workspace_id, omitUndefined(body) as BoardBody);
         return toolResponse(data, response_format, "Created Infinity Board");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));

@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { InfinityClient } from "../services/infinityClient.js";
+import { getInfinityClient } from "../services/auth.js";
 import { errorResponse, omitUndefined, toolResponse } from "../services/format.js";
 import type { FolderBody } from "../types.js";
 import { BoardIdSchema, FolderBodySchema, FolderIdSchema, PaginationSchema, ResponseFormatSchema, WorkspaceIdSchema } from "./schemas.js";
@@ -17,7 +17,7 @@ export function registerFolderTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, board_id, response_format, ...pagination } = params;
-        const data = await new InfinityClient().listFolders(workspace_id, board_id, pagination);
+        const data = await getInfinityClient("infinity:read").listFolders(workspace_id, board_id, pagination);
         return toolResponse(data, response_format, "Infinity Folders");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -35,7 +35,7 @@ export function registerFolderTools(server: McpServer): void {
     },
     async ({ workspace_id, board_id, folder_id, response_format }) => {
       try {
-        const data = await new InfinityClient().getFolder(workspace_id, board_id, folder_id);
+        const data = await getInfinityClient("infinity:read").getFolder(workspace_id, board_id, folder_id);
         return toolResponse(data, response_format, "Infinity Folder");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -54,7 +54,7 @@ export function registerFolderTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, board_id, response_format, ...body } = params;
-        const data = await new InfinityClient().createFolder(workspace_id, board_id, omitUndefined(body) as FolderBody);
+        const data = await getInfinityClient("infinity:write").createFolder(workspace_id, board_id, omitUndefined(body) as FolderBody);
         return toolResponse(data, response_format, "Created Infinity Folder");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -73,7 +73,7 @@ export function registerFolderTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, board_id, folder_id, response_format, ...body } = params;
-        const data = await new InfinityClient().updateFolder(workspace_id, board_id, folder_id, omitUndefined(body) as FolderBody);
+        const data = await getInfinityClient("infinity:write").updateFolder(workspace_id, board_id, folder_id, omitUndefined(body) as FolderBody);
         return toolResponse(data, response_format, "Updated Infinity Folder");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -91,7 +91,7 @@ export function registerFolderTools(server: McpServer): void {
     },
     async ({ workspace_id, board_id, folder_id, response_format }) => {
       try {
-        const data = await new InfinityClient().archiveFolder(workspace_id, board_id, folder_id);
+        const data = await getInfinityClient("infinity:admin").archiveFolder(workspace_id, board_id, folder_id);
         return toolResponse(data, response_format, "Archived Infinity Folder");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));

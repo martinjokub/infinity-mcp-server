@@ -4,3 +4,6 @@ dist/
 *.log
 *.tgz
 skill/
+config/mcp-users.json
+config/local-client-key.txt
+data/

@@ -9,8 +9,13 @@ services:
     environment:
       - TRANSPORT=http
       - PORT=3000
+      - MCP_USERS_FILE=/app/config/mcp-users.json
+      - MCP_CREDENTIAL_STORE_FILE=/app/data/credentials.enc.json
     ports:
       - "127.0.0.1:3015:3000"
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:3000/health || exit 1"]
       interval: 30s

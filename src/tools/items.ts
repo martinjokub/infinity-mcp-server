@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { InfinityClient } from "../services/infinityClient.js";
+import { getInfinityClient } from "../services/auth.js";
 import { errorResponse, normalizeValues, omitUndefined, toolResponse } from "../services/format.js";
 import type { JsonValue } from "../types.js";
 import {
@@ -33,7 +33,7 @@ export function registerItemTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, board_id, response_format, ...filters } = params;
-        const data = await new InfinityClient().listItems(workspace_id, board_id, filters);
+        const data = await getInfinityClient("infinity:read").listItems(workspace_id, board_id, filters);
         return toolResponse(data, response_format, "Infinity Items");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -51,7 +51,7 @@ export function registerItemTools(server: McpServer): void {
     },
     async ({ workspace_id, board_id, item_id, expand, response_format }) => {
       try {
-        const data = await new InfinityClient().getItem(workspace_id, board_id, item_id, { expand });
+        const data = await getInfinityClient("infinity:read").getItem(workspace_id, board_id, item_id, { expand });
         return toolResponse(data, response_format, "Infinity Item");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -70,7 +70,7 @@ export function registerItemTools(server: McpServer): void {
     async ({ workspace_id, board_id, folder_id, parent_id, values, sort_order, response_format }) => {
       try {
         const body = omitUndefined({ folder_id, parent_id, values: normalizeValues(values as Record<string, JsonValue> | undefined), sort_order });
-        const data = await new InfinityClient().createItem(workspace_id, board_id, body);
+        const data = await getInfinityClient("infinity:write").createItem(workspace_id, board_id, body);
         return toolResponse(data, response_format, "Created Infinity Item");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -90,7 +90,7 @@ export function registerItemTools(server: McpServer): void {
       try {
         const { workspace_id, board_id, item_id, values, response_format, ...rest } = params;
         const body = omitUndefined({ ...rest, values: normalizeValues(values as Record<string, JsonValue> | undefined) });
-        const data = await new InfinityClient().updateItem(workspace_id, board_id, item_id, body);
+        const data = await getInfinityClient("infinity:write").updateItem(workspace_id, board_id, item_id, body);
         return toolResponse(data, response_format, "Updated Infinity Item");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -108,7 +108,7 @@ export function registerItemTools(server: McpServer): void {
     },
     async ({ workspace_id, board_id, item_id, response_format }) => {
       try {
-        const data = await new InfinityClient().archiveItem(workspace_id, board_id, item_id);
+        const data = await getInfinityClient("infinity:admin").archiveItem(workspace_id, board_id, item_id);
         return toolResponse(data, response_format, "Archived Infinity Item");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -127,7 +127,7 @@ export function registerItemTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, board_id, parent_item_id, response_format, ...filters } = params;
-        const data = await new InfinityClient().listSubitems(workspace_id, board_id, parent_item_id, filters);
+        const data = await getInfinityClient("infinity:read").listSubitems(workspace_id, board_id, parent_item_id, filters);
         return toolResponse(data, response_format, "Infinity Subitems");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -146,7 +146,7 @@ export function registerItemTools(server: McpServer): void {
     async ({ workspace_id, board_id, folder_id, parent_item_id, values, sort_order, response_format }) => {
       try {
         const body = omitUndefined({ folder_id, parent_id: parent_item_id, values: normalizeValues(values as Record<string, JsonValue> | undefined), sort_order });
-        const data = await new InfinityClient().createItem(workspace_id, board_id, body);
+        const data = await getInfinityClient("infinity:write").createItem(workspace_id, board_id, body);
         return toolResponse(data, response_format, "Created Infinity Subitem");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));

@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { InfinityClient } from "../services/infinityClient.js";
+import { getInfinityClient } from "../services/auth.js";
 import { errorResponse, omitUndefined, toolResponse } from "../services/format.js";
 import type { AttributeBody } from "../types.js";
 import { AttributeBodySchema, AttributeIdSchema, BoardIdSchema, PaginationSchema, ResponseFormatSchema, WorkspaceIdSchema } from "./schemas.js";
@@ -17,7 +17,7 @@ export function registerAttributeTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, board_id, response_format, ...pagination } = params;
-        const data = await new InfinityClient().listAttributes(workspace_id, board_id, pagination);
+        const data = await getInfinityClient("infinity:read").listAttributes(workspace_id, board_id, pagination);
         return toolResponse(data, response_format, "Infinity Attributes");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -35,7 +35,7 @@ export function registerAttributeTools(server: McpServer): void {
     },
     async ({ workspace_id, board_id, attribute_id, response_format }) => {
       try {
-        const data = await new InfinityClient().getAttribute(workspace_id, board_id, attribute_id);
+        const data = await getInfinityClient("infinity:read").getAttribute(workspace_id, board_id, attribute_id);
         return toolResponse(data, response_format, "Infinity Attribute");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -63,7 +63,7 @@ export function registerAttributeTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, board_id, response_format, ...body } = params;
-        const data = await new InfinityClient().createAttribute(workspace_id, board_id, omitUndefined(body) as AttributeBody);
+        const data = await getInfinityClient("infinity:write").createAttribute(workspace_id, board_id, omitUndefined(body) as AttributeBody);
         return toolResponse(data, response_format, "Created Infinity Attribute");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -90,7 +90,7 @@ export function registerAttributeTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, board_id, attribute_id, response_format, ...body } = params;
-        const data = await new InfinityClient().updateAttribute(workspace_id, board_id, attribute_id, omitUndefined(body) as AttributeBody);
+        const data = await getInfinityClient("infinity:write").updateAttribute(workspace_id, board_id, attribute_id, omitUndefined(body) as AttributeBody);
         return toolResponse(data, response_format, "Updated Infinity Attribute");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -108,7 +108,7 @@ export function registerAttributeTools(server: McpServer): void {
     },
     async ({ workspace_id, board_id, attribute_id, response_format }) => {
       try {
-        const data = await new InfinityClient().deleteAttribute(workspace_id, board_id, attribute_id);
+        const data = await getInfinityClient("infinity:admin").deleteAttribute(workspace_id, board_id, attribute_id);
         return toolResponse(data, response_format, "Deleted Infinity Attribute");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));

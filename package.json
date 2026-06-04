@@ -1,6 +1,6 @@
 {
   "name": "infinity-mcp-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MCP server for StartInfinity API access by agents",
   "type": "module",
   "main": "dist/index.js",
@@ -31,7 +31,12 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
-    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js"
+    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "credentials:init": "node scripts/credentials.mjs init",
+    "credentials:add-profile": "node scripts/credentials.mjs add-profile",
+    "credentials:add-user": "node scripts/credentials.mjs add-user",
+    "credentials:list": "node scripts/credentials.mjs list",
+    "credentials:rotate-user-key": "node scripts/credentials.mjs rotate-user-key"
   },
   "engines": {
     "node": ">=18"

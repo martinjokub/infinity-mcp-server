@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { InfinityClient } from "../services/infinityClient.js";
+import { getInfinityClient } from "../services/auth.js";
 import { errorResponse, toolResponse } from "../services/format.js";
 import { ResponseFormatSchema } from "./schemas.js";
 
@@ -15,7 +15,7 @@ export function registerProfileTools(server: McpServer): void {
     },
     async ({ response_format }) => {
       try {
-        const data = await new InfinityClient().getProfile();
+        const data = await getInfinityClient("infinity:read").getProfile();
         return toolResponse(data, response_format, "Infinity Profile");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));

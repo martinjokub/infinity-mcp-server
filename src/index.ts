@@ -9,11 +9,12 @@ import { registerFolderTools } from "./tools/folders.js";
 import { registerItemTools } from "./tools/items.js";
 import { registerProfileTools } from "./tools/profile.js";
 import { registerWorkspaceTools } from "./tools/workspaces.js";
+import { authenticateBearerToken, runWithAuthContext, validateHttpSecurityConfig } from "./services/auth.js";
 
 function createServer(): McpServer {
   const server = new McpServer({
     name: "infinity-mcp-server",
-    version: "0.1.1",
+    version: "0.1.2",
   });
 
   registerProfileTools(server);
@@ -35,7 +36,7 @@ async function runStdio(): Promise<void> {
 }
 
 async function runHttp(): Promise<void> {
-  validateToken();
+  validateHttpSecurityConfig();
   const app = express();
   app.use(express.json({ limit: "2mb" }));
 
@@ -44,24 +45,27 @@ async function runHttp(): Promise<void> {
   });
 
   app.post("/mcp", async (req, res) => {
-    if (!authorizeMcpRequest(req, res)) {
+    const authContext = authorizeMcpRequest(req, res);
+    if (!authContext) {
       return;
     }
 
-    const server = createServer();
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-      enableJsonResponse: true,
-    });
-
-    res.on("close", () => {
-      transport.close().catch((error: unknown) => {
-        console.error("Failed to close MCP transport", error);
+    await runWithAuthContext(authContext, async () => {
+      const server = createServer();
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,
+        enableJsonResponse: true,
       });
-    });
 
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
+      res.on("close", () => {
+        transport.close().catch((error: unknown) => {
+          console.error("Failed to close MCP transport", error);
+        });
+      });
+
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+    });
   });
 
   const port = Number.parseInt(process.env.PORT ?? "3000", 10);
@@ -77,19 +81,18 @@ function validateToken(): void {
   }
 }
 
-function authorizeMcpRequest(req: Request, res: Response): boolean {
-  const expectedToken = process.env.MCP_AUTH_TOKEN;
-  if (!expectedToken) {
-    return true;
-  }
-
-  const authorization = req.header("authorization") ?? "";
-  if (authorization === `Bearer ${expectedToken}`) {
-    return true;
+function authorizeMcpRequest(req: Request, res: Response): ReturnType<typeof authenticateBearerToken> {
+  try {
+    const authContext = authenticateBearerToken(req.header("authorization"));
+    if (authContext) {
+      return authContext;
+    }
+  } catch (error) {
+    console.error("MCP authentication failed:", error instanceof Error ? error.message : String(error));
   }
 
   res.status(401).json({ error: "Unauthorized" });
-  return false;
+  return null;
 }
 
 const transport = process.env.TRANSPORT ?? "stdio";

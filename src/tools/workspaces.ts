@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { InfinityClient } from "../services/infinityClient.js";
+import { getInfinityClient } from "../services/auth.js";
 import { errorResponse, toolResponse } from "../services/format.js";
 import { PaginationSchema, ResponseFormatSchema, WorkspaceIdSchema } from "./schemas.js";
 
@@ -19,7 +19,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     async (params) => {
       try {
         const { response_format, ...pagination } = params;
-        const data = await new InfinityClient().listWorkspaces(pagination);
+        const data = await getInfinityClient("infinity:read").listWorkspaces(pagination);
         return toolResponse(data, response_format, "Infinity Workspaces");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -38,7 +38,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     async (params) => {
       try {
         const { workspace_id, response_format, ...pagination } = params;
-        const data = await new InfinityClient().listMembers(workspace_id, pagination);
+        const data = await getInfinityClient("infinity:read").listMembers(workspace_id, pagination);
         return toolResponse(data, response_format, "Infinity Workspace Members");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -56,7 +56,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     },
     async ({ workspace_id, email, role, response_format }) => {
       try {
-        const data = await new InfinityClient().inviteMember(workspace_id, { email, role });
+        const data = await getInfinityClient("infinity:admin").inviteMember(workspace_id, { email, role });
         return toolResponse(data, response_format, "Invited Infinity Workspace Member");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -74,7 +74,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     },
     async ({ workspace_id, user_id, role, response_format }) => {
       try {
-        const data = await new InfinityClient().addMember(workspace_id, user_id, { role });
+        const data = await getInfinityClient("infinity:admin").addMember(workspace_id, user_id, { role });
         return toolResponse(data, response_format, "Added Infinity Workspace Member");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
@@ -92,7 +92,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     },
     async ({ workspace_id, user_id, response_format }) => {
       try {
-        const data = await new InfinityClient().removeMember(workspace_id, user_id);
+        const data = await getInfinityClient("infinity:admin").removeMember(workspace_id, user_id);
         return toolResponse(data, response_format, "Removed Infinity Workspace Member");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));

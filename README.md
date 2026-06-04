@@ -8,7 +8,20 @@ Reusable agent skills for this server live in the companion repository:
 https://github.com/martinjokub/infinity-agent-skills
 ```
 
-## Setup
+## What This Server Protects
+
+There are two different secrets:
+
+- **MCP API key**: lets an MCP client call this server.
+- **Infinity token**: lets this server call Infinity.
+
+Do not give Infinity tokens to MCP clients. In Docker or cloud mode, each MCP API key maps to an encrypted Infinity credential profile stored on the server.
+
+If an Infinity token was placed in `.env`, Docker environment variables, chat messages, logs, screenshots, or any shared place, rotate it in Infinity after moving to the encrypted credential store.
+
+## Local Private Stdio Mode
+
+Use this only when the MCP server runs as a private subprocess on your own machine.
 
 ```powershell
 cd path\to\infinity-mcp-server
@@ -20,58 +33,135 @@ npm start
 
 Optional environment variables:
 
-- `INFINITY_API_TOKEN`: required bearer token.
+- `INFINITY_API_TOKEN`: required for stdio mode.
 - `INFINITY_API_BASE_URL`: defaults to `https://app.startinfinity.com/api/v2`.
 - `INFINITY_API_VERSION`: defaults to `2026-04-20.morava`.
 - `TRANSPORT`: `stdio` by default, or `http`.
 - `PORT`: HTTP port, defaults to `3000`.
-- `MCP_AUTH_TOKEN`: optional bearer token required for HTTP `/mcp` requests when set.
 
-## Local Configuration
+## Local Docker Mode
 
-Copy the example environment file and edit it for your own machine:
+This is the recommended setup for running a local HTTP MCP endpoint.
+
+### 1. Create `.env`
 
 ```powershell
 Copy-Item .env.example .env
-notepad .env
 ```
 
-Do not commit `.env`. It contains your private Infinity API token.
+### 2. Create the encrypted store
 
-## Docker
-
-Build and run directly:
+Run this once:
 
 ```powershell
-docker build -t infinity-mcp-server .
-docker run --rm --env-file .env -p 127.0.0.1:3015:3000 infinity-mcp-server
+npm run credentials:init
 ```
 
-Or copy `docker-compose.example.yml` into your own Docker Compose stack and adjust the paths, port, and environment file for your setup.
+The command prints a generated `MCP_CREDENTIAL_STORE_KEY`. Put that value into `.env`.
 
-Default local HTTP MCP endpoint when using the example port:
+### 3. Add your Infinity token to the encrypted store
+
+Run this from the same terminal after setting the master key:
+
+```powershell
+$env:MCP_CREDENTIAL_STORE_KEY = "the-value-from-your-env-file"
+npm run credentials:add-profile -- --id local --name "Local Infinity" --token "your-infinity-token"
+```
+
+The Infinity token is encrypted into `data/credentials.enc.json`.
+
+### 4. Create an MCP API key
+
+```powershell
+npm run credentials:add-user -- --name local-client --profile local --scopes infinity:read,infinity:write,infinity:admin
+```
+
+The command prints the MCP API key once. Your MCP client uses it like this:
+
+```txt
+Authorization: Bearer your-mcp-api-key
+```
+
+The plaintext MCP API key is not stored by the server. Only its hash is stored in `config/mcp-users.json`.
+
+### 5. Start Docker
+
+```powershell
+docker compose up -d --build
+```
+
+Default local endpoint:
 
 ```txt
 http://127.0.0.1:3015/mcp
 ```
 
-The host binding is local-only (`127.0.0.1`) so the MCP endpoint is available on this machine without being exposed publicly.
+The example Docker port is bound to `127.0.0.1`, so it is only available from this machine.
 
-## Security
+## Cloud Docker Mode
 
-Keep `.env` local and ignored. It contains the private Infinity token.
+For cloud Docker, use the same encrypted store and MCP API keys, plus normal cloud security:
 
-For local Docker use, bind the published port to `127.0.0.1` as shown above. For shared, remote, or reverse-proxied deployments, set `MCP_AUTH_TOKEN` and configure MCP clients to send:
+- Put the service behind HTTPS.
+- Do not publish the container directly to the public internet without a reverse proxy or firewall.
+- Use separate MCP API keys per user or automation.
+- Use separate Infinity credential profiles per user or automation.
+- Give read-only users only `infinity:read`.
+- Rotate MCP API keys when a client is removed.
+- Rotate Infinity tokens if they were ever exposed outside the encrypted store.
 
-```txt
-Authorization: Bearer your-mcp-auth-token
+In cloud mode, do not set `INFINITY_API_TOKEN` in Docker environment variables. Store Infinity tokens only through `credentials:add-profile`.
+
+## Credential Commands
+
+```powershell
+npm run credentials:init
+npm run credentials:add-profile -- --id local --name "Local Infinity" --token "your-infinity-token"
+npm run credentials:add-user -- --name local-client --profile local --scopes infinity:read,infinity:write,infinity:admin
+npm run credentials:list
+npm run credentials:rotate-user-key -- --name local-client
 ```
 
-The `/health` endpoint remains public so container health checks do not need secrets. The `/mcp` endpoint requires the bearer token only when `MCP_AUTH_TOKEN` is configured.
+Scopes:
 
-## Versioning
+- `infinity:read`: list/get/profile tools.
+- `infinity:write`: create/update tools.
+- `infinity:admin`: archive/delete/member-management tools.
 
-This project uses semver-compatible versions in the form `x.x.y`. Treat the final number as the change counter requested for the project: increment it by `+1` for each update or edit unless a higher-level version bump is explicitly requested.
+## Docker Compose
+
+Copy `docker-compose.example.yml` into your own Docker Compose stack if needed.
+
+```yaml
+services:
+  infinity-mcp:
+    build:
+      context: .
+    container_name: infinity-mcp
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - TRANSPORT=http
+      - PORT=3000
+      - MCP_USERS_FILE=/app/config/mcp-users.json
+      - MCP_CREDENTIAL_STORE_FILE=/app/data/credentials.enc.json
+    ports:
+      - "127.0.0.1:3015:3000"
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+```
+
+## Health Check
+
+`/health` is public and intentionally does not require secrets:
+
+```txt
+http://127.0.0.1:3015/health
+```
+
+`/mcp` always requires an MCP API key in HTTP mode.
 
 ## Tools
 
