@@ -2,135 +2,157 @@
 
 MCP server for agents that need to read and write StartInfinity data.
 
-Reusable agent skills for this server live in the companion repository:
+Skill repository for agents:
 
 ```txt
-https://github.com/martinjokub/infinity-agent-skills
+https://github.com/martinjokub/infinity-agent-skills.git
 ```
 
-## What This Server Protects
-
-There are two different secrets:
-
-- **MCP API key**: lets an MCP client call this server.
-- **Infinity token**: lets this server call Infinity.
-
-Do not give Infinity tokens to MCP clients. In Docker or cloud mode, each MCP API key maps to an encrypted Infinity credential profile stored on the server.
-
-If an Infinity token was placed in `.env`, Docker environment variables, chat messages, logs, screenshots, or any shared place, rotate it in Infinity after moving to the encrypted credential store.
-
-## Local Private Stdio Mode
-
-Use this only when the MCP server runs as a private subprocess on your own machine.
-
-```powershell
-cd path\to\infinity-mcp-server
-npm install
-npm run build
-$env:INFINITY_API_TOKEN = "your-infinity-token"
-npm start
-```
-
-Optional environment variables:
-
-- `INFINITY_API_TOKEN`: required for stdio mode.
-- `INFINITY_API_BASE_URL`: defaults to `https://app.startinfinity.com/api/v2`.
-- `INFINITY_API_VERSION`: defaults to `2026-04-20.morava`.
-- `TRANSPORT`: `stdio` by default, or `http`.
-- `PORT`: HTTP port, defaults to `3000`.
-
-## Local Docker Mode
-
-This is the recommended setup for running a local HTTP MCP endpoint.
-
-### 1. Create `.env`
-
-```powershell
-Copy-Item .env.example .env
-```
-
-### 2. Create the encrypted store
-
-Run this once:
-
-```powershell
-npm run credentials:init
-```
-
-The command prints a generated `MCP_CREDENTIAL_STORE_KEY`. Put that value into `.env`.
-
-### 3. Add your Infinity token to the encrypted store
-
-Run this from the same terminal after setting the master key:
-
-```powershell
-$env:MCP_CREDENTIAL_STORE_KEY = "the-value-from-your-env-file"
-npm run credentials:add-profile -- --id local --name "Local Infinity" --token "your-infinity-token"
-```
-
-The Infinity token is encrypted into `data/credentials.enc.json`.
-
-### 4. Create an MCP API key
-
-```powershell
-npm run credentials:add-user -- --name local-client --profile local --scopes infinity:read,infinity:write,infinity:admin
-```
-
-The command prints the MCP API key once. Your MCP client uses it like this:
+Server repository:
 
 ```txt
-Authorization: Bearer your-mcp-api-key
+https://github.com/martinjokub/infinity-mcp-server.git
 ```
 
-The plaintext MCP API key is not stored by the server. Only its hash is stored in `config/mcp-users.json`.
+## Easiest Setup: Ask An Agent To Install It
 
-### 5. Start Docker
+Use this when you want Codex or another agent to install Infinity MCP on a cloud server that runs Docker.
 
-```powershell
-docker compose up -d --build
-```
+The agent should run setup commands on the cloud server, outside Docker. Docker only runs the finished MCP server.
 
-Default local endpoint:
+Copy this prompt and fill in the placeholders:
 
 ```txt
-http://127.0.0.1:3015/mcp
+First, get and use the Infinity MCP skill from:
+
+https://github.com/martinjokub/infinity-agent-skills.git
+
+Then connect to my cloud server over SSH:
+
+<MY_SERVER_SSH_URL_OR_HOST>
+
+Install Infinity MCP from this GitHub repo:
+
+https://github.com/martinjokub/infinity-mcp-server.git
+
+Install it in this folder on the server:
+
+<MY_CHOSEN_FOLDER>
+
+Use this Infinity token only during setup:
+
+<MY_INFINITY_TOKEN>
+
+Create one MCP user:
+
+name: codex
+access: admin
+
+Run the MCP server with Docker Compose.
+
+Do not expose my Infinity token in Docker environment variables.
+Store the Infinity token in the encrypted credential store.
+
+After setup, test:
+
+1. /health works
+2. /mcp fails without Authorization
+3. /mcp works with Authorization: Bearer <generated MCP API key>
+4. infinity_get_profile works
+
+Then configure Codex/my MCP client to use this MCP server:
+
+name: infinity
+transport: streamable HTTP
+url: <MY_MCP_URL>
+authorization header: Bearer <generated MCP API key>
+
+At the end, tell me:
+
+1. the install folder
+2. the GitHub repo and commit used
+3. the Docker Compose service added
+4. the files created
+5. the MCP URL
+6. the MCP API key or the file path where it was saved
+7. proof that the tests passed
+8. where Codex/MCP client config was updated
 ```
 
-The example Docker port is bound to `127.0.0.1`, so it is only available from this machine.
+## What The Placeholders Mean
 
-## Cloud Docker Mode
+`<MY_SERVER_SSH_URL_OR_HOST>` is your cloud server SSH target. Examples:
 
-For cloud Docker, use the same encrypted store and MCP API keys, plus normal cloud security:
-
-- Put the service behind HTTPS.
-- Do not publish the container directly to the public internet without a reverse proxy or firewall.
-- Use separate MCP API keys per user or automation.
-- Use separate Infinity credential profiles per user or automation.
-- Give read-only users only `infinity:read`.
-- Rotate MCP API keys when a client is removed.
-- Rotate Infinity tokens if they were ever exposed outside the encrypted store.
-
-In cloud mode, do not set `INFINITY_API_TOKEN` in Docker environment variables. Store Infinity tokens only through `credentials:add-profile`.
-
-## Credential Commands
-
-```powershell
-npm run credentials:init
-npm run credentials:add-profile -- --id local --name "Local Infinity" --token "your-infinity-token"
-npm run credentials:add-user -- --name local-client --profile local --scopes infinity:read,infinity:write,infinity:admin
-npm run credentials:list
-npm run credentials:rotate-user-key -- --name local-client
+```txt
+root@example.com
+ubuntu@203.0.113.10
 ```
 
-Scopes:
+`<MY_CHOSEN_FOLDER>` is where you want the files to live on the cloud server. You control this path. Examples:
 
-- `infinity:read`: list/get/profile tools.
-- `infinity:write`: create/update tools.
-- `infinity:admin`: archive/delete/member-management tools.
+```txt
+/root/docker/infinity-mcp
+/opt/infinity-mcp
+/srv/infinity-mcp
+/home/myuser/docker/infinity-mcp
+```
 
-## Docker Compose
+`<MY_INFINITY_TOKEN>` is your StartInfinity developer token. Create one here:
 
-Copy `docker-compose.example.yml` into your own Docker Compose stack if needed.
+```txt
+https://app.startinfinity.com/profile/developer/tokens
+```
+
+`name: codex` is just the MCP client/user name. It can be anything:
+
+```txt
+codex
+chatgpt
+my-agent
+automation
+```
+
+`access` controls what that MCP user can do:
+
+```txt
+read-only  = can view Infinity data
+read-write = can view, create, and update data
+admin      = can also archive/delete and manage workspace members
+```
+
+For your own trusted Codex agent, `admin` is usually fine. For shared users, start with `read-only` or `read-write`.
+
+`<MY_MCP_URL>` is the URL your MCP client will call. For cloud use, prefer HTTPS through your reverse proxy:
+
+```txt
+https://my-domain.com/mcp
+```
+
+## What The Agent Will Create
+
+On the Docker host, the install folder will contain files like:
+
+```txt
+docker-compose.yml
+.env
+config/mcp-users.json
+data/credentials.enc.json
+config/codex-mcp-key.txt
+```
+
+Keep these private:
+
+```txt
+.env
+data/credentials.enc.json
+config/*-mcp-key.txt
+```
+
+The Infinity token is stored in `data/credentials.enc.json`, encrypted. The MCP API key is what Codex uses. They are different secrets.
+
+## Docker Compose Shape
+
+The service should look like this, adjusted to your folder and reverse proxy setup:
 
 ```yaml
 services:
@@ -152,6 +174,49 @@ services:
       - ./config:/app/config:ro
       - ./data:/app/data
 ```
+
+The `127.0.0.1` port binding means the container is reachable only from the server itself. Your HTTPS reverse proxy can then expose it safely as `https://your-domain.com/mcp`.
+
+## What This Server Protects
+
+There are two different secrets:
+
+- **MCP API key**: lets an MCP client call this server.
+- **Infinity token**: lets this server call Infinity.
+
+Do not give Infinity tokens to MCP clients. In Docker or cloud mode, each MCP API key maps to an encrypted Infinity credential profile stored on the server.
+
+If an Infinity token was placed in `.env`, Docker environment variables, chat messages, logs, screenshots, or any shared place, rotate it in Infinity after moving to the encrypted credential store.
+
+## Manual Local Stdio Mode
+
+Use this only when the MCP server runs as a private subprocess on your own machine.
+
+```powershell
+cd path\to\infinity-mcp-server
+npm install
+npm run build
+$env:INFINITY_API_TOKEN = "your-infinity-token"
+npm start
+```
+
+## Manual Credential Commands
+
+These commands are for advanced/manual setup. Run them on the Docker host, outside Docker, in the MCP server folder.
+
+```powershell
+npm run credentials:init
+npm run credentials:add-profile -- --id local --name "Local Infinity" --token "your-infinity-token"
+npm run credentials:add-user -- --name codex --profile local --scopes infinity:read,infinity:write,infinity:admin
+npm run credentials:list
+npm run credentials:rotate-user-key -- --name codex
+```
+
+Scopes:
+
+- `infinity:read`: list/get/profile tools.
+- `infinity:write`: create/update tools.
+- `infinity:admin`: archive/delete/member-management tools.
 
 ## Health Check
 
@@ -191,29 +256,3 @@ http://127.0.0.1:3015/health
 - `infinity_archive_item`
 - `infinity_list_subitems`
 - `infinity_create_subitem`
-
-## Agent Workflow
-
-For item creation or updates, agents should usually:
-
-1. List workspaces.
-2. List boards in the selected workspace.
-3. List folders in the selected board.
-4. List attributes for the board.
-5. Use attribute IDs in `values`.
-
-The item tools accept `values` as an object keyed by attribute ID:
-
-```json
-{
-  "workspace_id": "52593",
-  "board_id": "qSV7FQJcEcw",
-  "folder_id": "PssjTc4Yb1b",
-  "values": {
-    "8b935736-943f-458a-a511-80fe04bd8911": "Task name",
-    "40c82ac2-fe83-4dda-88a3-461ee4d945f7": true
-  }
-}
-```
-
-The server automatically converts that object into Infinity's `values: [{ attribute_id, data }]` API shape.

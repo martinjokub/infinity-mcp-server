@@ -14,7 +14,7 @@ import { authenticateBearerToken, runWithAuthContext, validateHttpSecurityConfig
 function createServer(): McpServer {
   const server = new McpServer({
     name: "infinity-mcp-server",
-    version: "0.1.2",
+    version: "0.1.3",
   });
 
   registerProfileTools(server);
