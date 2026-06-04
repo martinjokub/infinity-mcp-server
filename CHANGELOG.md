@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Add the current server version near the top of the README.
+- Make the changelog discoverable from the README.
+
 ## 0.1.3
 
 - Rewrite setup documentation around an agent-led cloud Docker install prompt.
