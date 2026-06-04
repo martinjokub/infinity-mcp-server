@@ -1,6 +1,6 @@
 {
   "name": "infinity-mcp-server",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "MCP server for StartInfinity API access by agents",
   "type": "module",
   "main": "dist/index.js",

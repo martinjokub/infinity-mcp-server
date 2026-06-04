@@ -2,7 +2,7 @@
 
 MCP server for agents that need to read and write StartInfinity data.
 
-Current version: `0.1.4`
+Current version: `0.1.5`
 
 Changelog:
 
