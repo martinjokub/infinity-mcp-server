@@ -2,7 +2,7 @@
 
 MCP server for agents that need to read and write StartInfinity data.
 
-Current version: `0.1.7`
+Current version: `0.1.8`
 
 Changelog:
 
@@ -307,6 +307,7 @@ http://127.0.0.1:3015/health
 - `infinity_list_comments`
 - `infinity_get_comment`
 - `infinity_create_comment`
+- `infinity_add_item_comment`
 - `infinity_update_comment`
 - `infinity_delete_comment`
 

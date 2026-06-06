@@ -39,7 +39,7 @@ export const CommentExpandSchema = z
   .describe("Optional comment expansions.");
 
 export const CommentBodySchema = {
-  text: z.string().min(1).optional().describe("Comment body. HTML is supported by Infinity, for example <p>Hello</p>."),
+  text: z.string().min(1).optional().describe("Comment text."),
   parent_id: z.string().nullable().optional().describe("Optional parent comment ID for replies, or null."),
 };
 

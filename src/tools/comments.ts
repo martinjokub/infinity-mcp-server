@@ -74,18 +74,18 @@ export function registerCommentTools(server: McpServer): void {
     "infinity_create_comment",
     {
       title: "Create Infinity Comment",
-      description: "Create a comment on an item. The text can be plain text or Infinity-supported HTML such as <p>Hello</p>.",
+      description: "Create a comment on an Infinity item.",
       inputSchema: z
         .object({
           workspace_id: WorkspaceIdSchema,
           board_id: BoardIdSchema,
           item_id: ItemIdSchema,
           ...CommentBodySchema,
-          text: z.string().min(1).describe("Comment body. HTML is supported by Infinity, for example <p>Hello</p>."),
+          text: z.string().min(1).describe("Comment text."),
           response_format: ResponseFormatSchema,
         })
         .strict(),
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async (params) => {
       try {
@@ -97,6 +97,34 @@ export function registerCommentTools(server: McpServer): void {
           omitUndefined(body) as CommentBody,
         );
         return toolResponse(data, response_format, "Created Infinity Comment");
+      } catch (error) {
+        return errorResponse(error instanceof Error ? error.message : String(error));
+      }
+    },
+  );
+
+  server.registerTool(
+    "infinity_add_item_comment",
+    {
+      title: "Add Comment To Infinity Item",
+      description: "Append a plain text comment to an Infinity item. This does not edit item fields, archive data, or delete data.",
+      inputSchema: z
+        .object({
+          workspace_id: WorkspaceIdSchema,
+          board_id: BoardIdSchema,
+          item_id: ItemIdSchema,
+          comment_text: z.string().min(1).describe("Plain text comment to add to the item."),
+          response_format: ResponseFormatSchema,
+        })
+        .strict(),
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ workspace_id, board_id, item_id, comment_text, response_format }) => {
+      try {
+        const data = await getInfinityClient("infinity:write").createComment(workspace_id, board_id, item_id, {
+          text: comment_text,
+        });
+        return toolResponse(data, response_format, "Added Infinity Item Comment");
       } catch (error) {
         return errorResponse(error instanceof Error ? error.message : String(error));
       }

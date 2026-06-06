@@ -16,7 +16,7 @@ import { getOAuthWwwAuthenticateHeader, registerOAuthRoutes, validateOAuthConfig
 function createServer(): McpServer {
   const server = new McpServer({
     name: "infinity-mcp-server",
-    version: "0.1.7",
+    version: "0.1.8",
   });
 
   registerProfileTools(server);

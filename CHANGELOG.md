@@ -2,6 +2,11 @@
 
 All entry timestamps use GMT+0/UTC.
 
+## 0.1.8 - 2026-06-06 21:20 UTC
+
+- Add a safer plain-text `infinity_add_item_comment` tool for ChatGPT custom app safety checks.
+- Remove HTML wording from comment tool descriptions.
+
 ## 0.1.7 - 2026-06-06 20:55 UTC
 
 - Persist OAuth access token hashes so ChatGPT custom app sessions survive container restarts.
