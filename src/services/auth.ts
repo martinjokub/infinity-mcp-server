@@ -3,6 +3,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { InfinityClient } from "./infinityClient.js";
 import { loadCredentialStore } from "./credentialStore.js";
+import { validateOAuthAccessToken } from "./oauth.js";
 
 export type InfinityScope = "infinity:read" | "infinity:write" | "infinity:admin";
 
@@ -52,7 +53,8 @@ export function authenticateBearerToken(authorizationHeader: string | undefined)
     return null;
   }
 
-  const user = findUserByApiKey(token);
+  const oauthContext = validateOAuthAccessToken(token);
+  const user = oauthContext ? findUserByName(oauthContext.userName) : findUserByApiKey(token);
   if (!user) {
     return null;
   }
@@ -66,7 +68,7 @@ export function authenticateBearerToken(authorizationHeader: string | undefined)
   return {
     callerName: user.name,
     profileId: user.profile_id,
-    scopes: user.scopes,
+    scopes: oauthContext?.scopes ?? user.scopes,
     infinityToken: profile.infinity_token,
   };
 }
@@ -122,6 +124,16 @@ function findUserByApiKey(apiKey: string): UserRecord | null {
   }
 
   return null;
+}
+
+function findUserByName(name: string): UserRecord | null {
+  const usersFile = process.env.MCP_USERS_FILE;
+  if (!usersFile) {
+    throw new Error("MCP_USERS_FILE is required in HTTP mode.");
+  }
+
+  const config = JSON.parse(readFileSync(usersFile, "utf8")) as UserConfig;
+  return (config.users ?? []).find((user) => user.name === name) ?? null;
 }
 
 function constantTimeEqualHex(left: string, right: string): boolean {

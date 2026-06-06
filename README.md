@@ -196,6 +196,42 @@ Do not give Infinity tokens to MCP clients. In Docker or cloud mode, each MCP AP
 
 If an Infinity token was placed in `.env`, Docker environment variables, chat messages, logs, screenshots, or any shared place, rotate it in Infinity after moving to the encrypted credential store.
 
+## Optional OAuth For ChatGPT Custom Apps
+
+HTTP mode can also advertise OAuth endpoints for clients that cannot send a static MCP API key header. OAuth access tokens are mapped to an existing MCP user, for example `codex`; the Infinity developer token still stays only in the encrypted credential store.
+
+Add these values to `.env` with your own generated client credentials:
+
+```txt
+OAUTH_ENABLED=true
+OAUTH_PUBLIC_URL=https://your-mcp-domain.example.com
+OAUTH_CLIENT_ID=replace-with-oauth-client-id
+OAUTH_CLIENT_SECRET=replace-with-oauth-client-secret
+OAUTH_ALLOWED_REDIRECT_ORIGINS=https://chatgpt.com,https://chat.openai.com
+OAUTH_MCP_USER=codex
+```
+
+Then configure the external MCP client with:
+
+```txt
+Server URL: https://your-mcp-domain.example.com/mcp
+Authentication: OAuth
+Registration method: User-defined OAuth client
+OAuth Client ID: <OAUTH_CLIENT_ID>
+OAuth Client Secret: <OAUTH_CLIENT_SECRET>
+Token endpoint auth method: client_secret_post
+Scopes: infinity:read infinity:write infinity:admin
+```
+
+Discovery endpoints:
+
+```txt
+/.well-known/oauth-protected-resource
+/.well-known/oauth-authorization-server
+/oauth/authorize
+/oauth/token
+```
+
 ## Manual Local Stdio Mode
 
 Use this only when the MCP server runs as a private subprocess on your own machine.

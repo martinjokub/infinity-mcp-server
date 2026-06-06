@@ -10,6 +10,7 @@ import { registerItemTools } from "./tools/items.js";
 import { registerProfileTools } from "./tools/profile.js";
 import { registerWorkspaceTools } from "./tools/workspaces.js";
 import { authenticateBearerToken, runWithAuthContext, validateHttpSecurityConfig } from "./services/auth.js";
+import { getOAuthWwwAuthenticateHeader, registerOAuthRoutes, validateOAuthConfig } from "./services/oauth.js";
 
 function createServer(): McpServer {
   const server = new McpServer({
@@ -37,12 +38,16 @@ async function runStdio(): Promise<void> {
 
 async function runHttp(): Promise<void> {
   validateHttpSecurityConfig();
+  validateOAuthConfig();
   const app = express();
   app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ extended: false }));
 
   app.get("/health", (_req, res) => {
     res.json({ ok: true, service: "infinity-mcp-server" });
   });
+
+  registerOAuthRoutes(app);
 
   app.post("/mcp", async (req, res) => {
     const authContext = authorizeMcpRequest(req, res);
@@ -91,6 +96,10 @@ function authorizeMcpRequest(req: Request, res: Response): ReturnType<typeof aut
     console.error("MCP authentication failed:", error instanceof Error ? error.message : String(error));
   }
 
+  const authenticateHeader = getOAuthWwwAuthenticateHeader();
+  if (authenticateHeader) {
+    res.setHeader("WWW-Authenticate", authenticateHeader);
+  }
   res.status(401).json({ error: "Unauthorized" });
   return null;
 }
