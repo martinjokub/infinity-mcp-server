@@ -176,6 +176,7 @@ services:
       - PORT=3000
       - MCP_USERS_FILE=/app/config/mcp-users.json
       - MCP_CREDENTIAL_STORE_FILE=/app/data/credentials.enc.json
+      - OAUTH_TOKEN_STORE_FILE=/app/data/oauth-tokens.json
     ports:
       - "127.0.0.1:3015:3000"
     volumes:
@@ -209,7 +210,10 @@ OAUTH_CLIENT_ID=replace-with-oauth-client-id
 OAUTH_CLIENT_SECRET=replace-with-oauth-client-secret
 OAUTH_ALLOWED_REDIRECT_ORIGINS=https://chatgpt.com,https://chat.openai.com
 OAUTH_MCP_USER=codex
+OAUTH_TOKEN_STORE_FILE=/app/data/oauth-tokens.json
 ```
+
+`OAUTH_TOKEN_STORE_FILE` stores OAuth access token hashes so ChatGPT custom app sessions can survive container rebuilds and restarts. Raw OAuth access tokens are not written to disk.
 
 Then configure the external MCP client with:
 

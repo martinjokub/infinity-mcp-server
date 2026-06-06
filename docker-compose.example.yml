@@ -11,6 +11,7 @@ services:
       - PORT=3000
       - MCP_USERS_FILE=/app/config/mcp-users.json
       - MCP_CREDENTIAL_STORE_FILE=/app/data/credentials.enc.json
+      - OAUTH_TOKEN_STORE_FILE=/app/data/oauth-tokens.json
     ports:
       - "127.0.0.1:3015:3000"
     volumes:

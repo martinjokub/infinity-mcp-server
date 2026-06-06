@@ -2,6 +2,10 @@
 
 All entry timestamps use GMT+0/UTC.
 
+## 0.1.7 - 2026-06-06 20:55 UTC
+
+- Persist OAuth access token hashes so ChatGPT custom app sessions survive container restarts.
+
 ## 0.1.6 - 2026-06-06 16:35 UTC
 
 - Add MCP tools for listing, getting, creating, updating, and deleting item comments.

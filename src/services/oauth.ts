@@ -1,4 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import type { Request, Response } from "express";
 import type { InfinityScope } from "./auth.js";
 
@@ -19,10 +21,14 @@ type AuthorizationCode = {
 };
 
 type AccessToken = {
-  token: string;
   scope: InfinityScope[];
   user_name: string;
   expires_at: number;
+};
+
+type PersistedOAuthStore = {
+  version: 1;
+  access_tokens: Array<AccessToken & { token_hash: string; created_at?: string }>;
 };
 
 const codes = new Map<string, AuthorizationCode>();
@@ -30,6 +36,7 @@ const accessTokens = new Map<string, AccessToken>();
 const CODE_TTL_MS = 10 * 60 * 1000;
 const TOKEN_TTL_SECONDS = 60 * 60 * 12;
 const DEFAULT_SCOPES: InfinityScope[] = ["infinity:read", "infinity:write", "infinity:admin"];
+let tokensLoaded = false;
 
 export type OAuthTokenContext = {
   userName: string;
@@ -74,8 +81,9 @@ export function getOAuthWwwAuthenticateHeader(): string | null {
 export function validateOAuthAccessToken(token: string): OAuthTokenContext | null {
   if (!isOAuthEnabled()) return null;
 
+  ensureAccessTokensLoaded();
   purgeExpired();
-  const record = accessTokens.get(token);
+  const record = accessTokens.get(hashToken(token));
   if (!record || record.expires_at <= Date.now()) {
     return null;
   }
@@ -145,6 +153,7 @@ function authorize(req: Request, res: Response): void {
 }
 
 function token(req: Request, res: Response): void {
+  ensureAccessTokensLoaded();
   purgeExpired();
   const client = getConfiguredClient();
   const credentials = extractClientCredentials(req);
@@ -175,12 +184,12 @@ function token(req: Request, res: Response): void {
 
   codes.delete(code);
   const accessToken = `oauth_${randomBytes(32).toString("base64url")}`;
-  accessTokens.set(accessToken, {
-    token: accessToken,
+  accessTokens.set(hashToken(accessToken), {
     scope: authorizationCode.scope,
     user_name: authorizationCode.user_name,
     expires_at: Date.now() + TOKEN_TTL_SECONDS * 1000,
   });
+  saveAccessTokens();
 
   res.json({
     access_token: accessToken,
@@ -259,12 +268,17 @@ function getAllowedRedirectOrigins(): string[] {
 
 function purgeExpired(): void {
   const now = Date.now();
+  let changed = false;
   for (const [code, record] of codes) {
     if (record.expires_at <= now) codes.delete(code);
   }
   for (const [token, record] of accessTokens) {
-    if (record.expires_at <= now) accessTokens.delete(token);
+    if (record.expires_at <= now) {
+      accessTokens.delete(token);
+      changed = true;
+    }
   }
+  if (changed) saveAccessTokens();
 }
 
 function isOAuthEnabled(): boolean {
@@ -277,6 +291,54 @@ function getPublicUrl(): string {
 
 function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+function hashToken(token: string): string {
+  return sha256(token);
+}
+
+function ensureAccessTokensLoaded(): void {
+  if (tokensLoaded) return;
+  tokensLoaded = true;
+
+  const storeFile = getOAuthTokenStoreFile();
+  if (!storeFile || !existsSync(storeFile)) return;
+
+  const parsed = JSON.parse(readFileSync(storeFile, "utf8")) as PersistedOAuthStore;
+  const now = Date.now();
+  for (const record of parsed.access_tokens ?? []) {
+    if (!record.token_hash || record.expires_at <= now) continue;
+    accessTokens.set(record.token_hash, {
+      scope: parseScopes(record.scope.join(" ")),
+      user_name: record.user_name,
+      expires_at: record.expires_at,
+    });
+  }
+}
+
+function saveAccessTokens(): void {
+  const storeFile = getOAuthTokenStoreFile();
+  if (!storeFile) return;
+
+  const store: PersistedOAuthStore = {
+    version: 1,
+    access_tokens: Array.from(accessTokens.entries()).map(([token_hash, record]) => ({
+      token_hash,
+      scope: record.scope,
+      user_name: record.user_name,
+      expires_at: record.expires_at,
+      created_at: new Date().toISOString(),
+    })),
+  };
+
+  mkdirSync(dirname(storeFile), { recursive: true });
+  const tempFile = `${storeFile}.tmp`;
+  writeFileSync(tempFile, `${JSON.stringify(store, null, 2)}\n`, { mode: 0o600 });
+  renameSync(tempFile, storeFile);
+}
+
+function getOAuthTokenStoreFile(): string {
+  return process.env.OAUTH_TOKEN_STORE_FILE || "";
 }
 
 function constantTimeEqual(left: string, right: string): boolean {
