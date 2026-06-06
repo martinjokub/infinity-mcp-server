@@ -9,11 +9,13 @@ import type {
   InfinityPage,
   InfinityWorkspace,
   InfinityMember,
+  InfinityComment,
   BoardBody,
   AttributeBody,
   InviteMemberBody,
   MemberBody,
   ItemBody,
+  CommentBody,
   JsonValue,
   PaginationInput,
 } from "../types.js";
@@ -147,6 +149,52 @@ export class InfinityClient {
       data: page.data.filter((item) => item.parent_id === parentItemId),
       has_more: page.has_more,
     };
+  }
+
+  async listComments(
+    workspaceId: string,
+    boardId: string,
+    itemId: string,
+    params: PaginationInput = {},
+  ): Promise<InfinityPage<InfinityComment>> {
+    return this.list<InfinityComment>(`/workspaces/${workspaceId}/boards/${boardId}/items/${itemId}/comments`, params);
+  }
+
+  async getComment(
+    workspaceId: string,
+    boardId: string,
+    itemId: string,
+    commentId: string,
+    params: { expand?: string[] } = {},
+  ): Promise<InfinityComment> {
+    return this.request<InfinityComment>(
+      "GET",
+      `/workspaces/${workspaceId}/boards/${boardId}/items/${itemId}/comments/${commentId}`,
+      undefined,
+      params,
+    );
+  }
+
+  async createComment(workspaceId: string, boardId: string, itemId: string, body: CommentBody): Promise<InfinityComment> {
+    return this.request<InfinityComment>("POST", `/workspaces/${workspaceId}/boards/${boardId}/items/${itemId}/comments`, body);
+  }
+
+  async updateComment(
+    workspaceId: string,
+    boardId: string,
+    itemId: string,
+    commentId: string,
+    body: CommentBody,
+  ): Promise<InfinityComment> {
+    return this.request<InfinityComment>(
+      "PUT",
+      `/workspaces/${workspaceId}/boards/${boardId}/items/${itemId}/comments/${commentId}`,
+      body,
+    );
+  }
+
+  async deleteComment(workspaceId: string, boardId: string, itemId: string, commentId: string): Promise<InfinityComment> {
+    return this.request<InfinityComment>("DELETE", `/workspaces/${workspaceId}/boards/${boardId}/items/${itemId}/comments/${commentId}`);
   }
 
   private async list<T>(path: string, params: PaginationInput & { folder_id?: string } = {}): Promise<InfinityPage<T>> {

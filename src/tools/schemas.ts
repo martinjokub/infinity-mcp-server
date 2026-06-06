@@ -17,6 +17,7 @@ export const BoardIdSchema = z.string().min(1).describe("Infinity board ID.");
 export const FolderIdSchema = z.string().min(1).describe("Infinity folder ID.");
 export const ItemIdSchema = z.string().min(1).describe("Infinity item ID.");
 export const AttributeIdSchema = z.string().min(1).describe("Infinity attribute ID.");
+export const CommentIdSchema = z.string().min(1).describe("Infinity comment ID.");
 
 export const JsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(JsonValueSchema), z.record(JsonValueSchema)]),
@@ -31,6 +32,16 @@ export const ItemExpandSchema = z
   .array(z.enum(["values", "values.attribute", "folder", "created_by"]))
   .optional()
   .describe("Optional item expansions.");
+
+export const CommentExpandSchema = z
+  .array(z.enum(["item", "item.values", "created_by"]))
+  .optional()
+  .describe("Optional comment expansions.");
+
+export const CommentBodySchema = {
+  text: z.string().min(1).optional().describe("Comment body. HTML is supported by Infinity, for example <p>Hello</p>."),
+  parent_id: z.string().nullable().optional().describe("Optional parent comment ID for replies, or null."),
+};
 
 export const FolderBodySchema = {
   name: z.string().min(1).optional().describe("Folder name."),

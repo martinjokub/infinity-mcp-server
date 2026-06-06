@@ -2,6 +2,11 @@
 
 All entry timestamps use GMT+0/UTC.
 
+## 0.1.6 - 2026-06-06 16:35 UTC
+
+- Add MCP tools for listing, getting, creating, updating, and deleting item comments.
+- Document remaining public API areas that are not yet exposed as MCP tools.
+
 ## 0.1.5 - 2026-06-04 10:49 UTC
 
 - Add GMT+0/UTC timestamps to all changelog entries.

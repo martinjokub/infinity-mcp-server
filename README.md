@@ -300,3 +300,16 @@ http://127.0.0.1:3015/health
 - `infinity_archive_item`
 - `infinity_list_subitems`
 - `infinity_create_subitem`
+- `infinity_list_comments`
+- `infinity_get_comment`
+- `infinity_create_comment`
+- `infinity_update_comment`
+- `infinity_delete_comment`
+
+Documented Infinity API areas not yet exposed as MCP tools:
+
+- Attachments
+- Views
+- References
+- Hooks
+- Time tracking

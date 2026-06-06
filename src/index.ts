@@ -5,6 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { registerAttributeTools } from "./tools/attributes.js";
 import { registerBoardTools } from "./tools/boards.js";
+import { registerCommentTools } from "./tools/comments.js";
 import { registerFolderTools } from "./tools/folders.js";
 import { registerItemTools } from "./tools/items.js";
 import { registerProfileTools } from "./tools/profile.js";
@@ -24,6 +25,7 @@ function createServer(): McpServer {
   registerFolderTools(server);
   registerAttributeTools(server);
   registerItemTools(server);
+  registerCommentTools(server);
 
   return server;
 }

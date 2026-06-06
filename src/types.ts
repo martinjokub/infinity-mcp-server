@@ -104,6 +104,17 @@ export interface InfinityItem {
   [key: string]: unknown;
 }
 
+export interface InfinityComment {
+  id: string;
+  object: "comment";
+  parent_id?: string | null;
+  text: string;
+  created_at?: string;
+  created_by?: number | Record<string, unknown>;
+  deleted?: boolean;
+  [key: string]: unknown;
+}
+
 export interface FolderBody {
   name?: string;
   color?: string | null;
@@ -118,6 +129,11 @@ export interface ItemBody {
   parent_id?: string | null;
   values?: InfinityValue[];
   sort_order?: string;
+}
+
+export interface CommentBody {
+  text?: string;
+  parent_id?: string | null;
 }
 
 export interface PaginationInput {
