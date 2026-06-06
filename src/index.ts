@@ -10,24 +10,54 @@ import { registerFolderTools } from "./tools/folders.js";
 import { registerItemTools } from "./tools/items.js";
 import { registerProfileTools } from "./tools/profile.js";
 import { registerWorkspaceTools } from "./tools/workspaces.js";
-import { authenticateBearerToken, runWithAuthContext, validateHttpSecurityConfig } from "./services/auth.js";
+import { authenticateBearerToken, getAuthContext, runWithAuthContext, validateHttpSecurityConfig } from "./services/auth.js";
 import { getOAuthWwwAuthenticateHeader, registerOAuthRoutes, validateOAuthConfig } from "./services/oauth.js";
 
 function createServer(): McpServer {
   const server = new McpServer({
     name: "infinity-mcp-server",
-    version: "0.1.8",
+    version: "0.1.9",
   });
+  const toolServer = createToolRegistrationServer(server);
 
-  registerProfileTools(server);
-  registerWorkspaceTools(server);
-  registerBoardTools(server);
-  registerFolderTools(server);
-  registerAttributeTools(server);
-  registerItemTools(server);
-  registerCommentTools(server);
+  registerProfileTools(toolServer);
+  registerWorkspaceTools(toolServer);
+  registerBoardTools(toolServer);
+  registerFolderTools(toolServer);
+  registerAttributeTools(toolServer);
+  registerItemTools(toolServer);
+  registerCommentTools(toolServer);
 
   return server;
+}
+
+function createToolRegistrationServer(server: McpServer): McpServer {
+  const allowedTools = getAllowedToolsForCurrentContext();
+  if (!allowedTools) return server;
+
+  return new Proxy(server, {
+    get(target, property, receiver) {
+      if (property !== "registerTool") {
+        return Reflect.get(target, property, receiver);
+      }
+
+      return (name: string, ...args: unknown[]) => {
+        if (!allowedTools.has(name)) {
+          return undefined;
+        }
+        return (target.registerTool as unknown as Function).call(target, name, ...args);
+      };
+    },
+  }) as McpServer;
+}
+
+function getAllowedToolsForCurrentContext(): Set<string> | null {
+  const context = getAuthContext();
+  if (context?.authMethod !== "oauth") return null;
+
+  const configured = process.env.OAUTH_ALLOWED_TOOLS || "";
+  const toolNames = configured.split(",").map((tool) => tool.trim()).filter(Boolean);
+  return toolNames.length > 0 ? new Set(toolNames) : null;
 }
 
 async function runStdio(): Promise<void> {

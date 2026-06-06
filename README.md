@@ -2,7 +2,7 @@
 
 MCP server for agents that need to read and write StartInfinity data.
 
-Current version: `0.1.8`
+Current version: `0.1.9`
 
 Changelog:
 
@@ -177,6 +177,7 @@ services:
       - MCP_USERS_FILE=/app/config/mcp-users.json
       - MCP_CREDENTIAL_STORE_FILE=/app/data/credentials.enc.json
       - OAUTH_TOKEN_STORE_FILE=/app/data/oauth-tokens.json
+      - OAUTH_ALLOWED_TOOLS=infinity_get_profile,infinity_list_workspaces,infinity_list_boards,infinity_get_board,infinity_list_folders,infinity_get_folder,infinity_list_attributes,infinity_get_attribute,infinity_list_items,infinity_get_item,infinity_list_subitems,infinity_list_comments,infinity_get_comment,infinity_add_item_comment
     ports:
       - "127.0.0.1:3015:3000"
     volumes:
@@ -211,9 +212,12 @@ OAUTH_CLIENT_SECRET=replace-with-oauth-client-secret
 OAUTH_ALLOWED_REDIRECT_ORIGINS=https://chatgpt.com,https://chat.openai.com
 OAUTH_MCP_USER=codex
 OAUTH_TOKEN_STORE_FILE=/app/data/oauth-tokens.json
+OAUTH_ALLOWED_TOOLS=infinity_get_profile,infinity_list_workspaces,infinity_list_boards,infinity_get_board,infinity_list_folders,infinity_get_folder,infinity_list_attributes,infinity_get_attribute,infinity_list_items,infinity_get_item,infinity_list_subitems,infinity_list_comments,infinity_get_comment,infinity_add_item_comment
 ```
 
 `OAUTH_TOKEN_STORE_FILE` stores OAuth access token hashes so ChatGPT custom app sessions can survive container rebuilds and restarts. Raw OAuth access tokens are not written to disk.
+
+`OAUTH_ALLOWED_TOOLS` optionally limits the tools shown to OAuth clients. Static MCP API keys still see the full tool set.
 
 Then configure the external MCP client with:
 

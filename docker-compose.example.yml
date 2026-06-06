@@ -12,6 +12,7 @@ services:
       - MCP_USERS_FILE=/app/config/mcp-users.json
       - MCP_CREDENTIAL_STORE_FILE=/app/data/credentials.enc.json
       - OAUTH_TOKEN_STORE_FILE=/app/data/oauth-tokens.json
+      - OAUTH_ALLOWED_TOOLS=infinity_get_profile,infinity_list_workspaces,infinity_list_boards,infinity_get_board,infinity_list_folders,infinity_get_folder,infinity_list_attributes,infinity_get_attribute,infinity_list_items,infinity_get_item,infinity_list_subitems,infinity_list_comments,infinity_get_comment,infinity_add_item_comment
     ports:
       - "127.0.0.1:3015:3000"
     volumes:

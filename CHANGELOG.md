@@ -2,6 +2,10 @@
 
 All entry timestamps use GMT+0/UTC.
 
+## 0.1.9 - 2026-06-06 21:40 UTC
+
+- Add an OAuth-only tool allowlist so ChatGPT custom apps can be restricted to safe read/comment tools.
+
 ## 0.1.8 - 2026-06-06 21:20 UTC
 
 - Add a safer plain-text `infinity_add_item_comment` tool for ChatGPT custom app safety checks.

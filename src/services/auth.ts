@@ -12,6 +12,7 @@ export type AuthContext = {
   profileId: string;
   scopes: InfinityScope[];
   infinityToken: string;
+  authMethod: "api_key" | "oauth";
 };
 
 type UserConfig = {
@@ -47,6 +48,10 @@ export function getInfinityClient(requiredScope: InfinityScope): InfinityClient 
   return new InfinityClient({ token: context.infinityToken });
 }
 
+export function getAuthContext(): AuthContext | undefined {
+  return authStorage.getStore();
+}
+
 export function authenticateBearerToken(authorizationHeader: string | undefined): AuthContext | null {
   const token = parseBearerToken(authorizationHeader);
   if (!token) {
@@ -70,6 +75,7 @@ export function authenticateBearerToken(authorizationHeader: string | undefined)
     profileId: user.profile_id,
     scopes: oauthContext?.scopes ?? user.scopes,
     infinityToken: profile.infinity_token,
+    authMethod: oauthContext ? "oauth" : "api_key",
   };
 }
 
