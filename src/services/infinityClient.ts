@@ -16,8 +16,17 @@ import type {
   MemberBody,
   ItemBody,
   CommentBody,
+  HookBody,
+  InfinityAttachment,
+  InfinityHook,
+  InfinityReference,
+  InfinityTimeEntry,
+  InfinityView,
   JsonValue,
   PaginationInput,
+  ReferenceBody,
+  TimeEntryBody,
+  ViewBody,
 } from "../types.js";
 
 export class InfinityClient {
@@ -197,6 +206,89 @@ export class InfinityClient {
     return this.request<InfinityComment>("DELETE", `/workspaces/${workspaceId}/boards/${boardId}/items/${itemId}/comments/${commentId}`);
   }
 
+  async uploadAttachmentFromUrl(workspaceId: string, url: string): Promise<InfinityAttachment> {
+    return this.request<InfinityAttachment>("POST", `/workspaces/${workspaceId}/attachments/url`, { url });
+  }
+
+  async uploadAttachmentFromBase64(
+    workspaceId: string,
+    fileName: string,
+    contentBase64: string,
+    contentType?: string,
+  ): Promise<InfinityAttachment> {
+    const content = Buffer.from(contentBase64, "base64");
+    if (content.length === 0) throw new Error("Attachment content_base64 did not contain a file.");
+
+    const form = new FormData();
+    form.append("file", new Blob([content], { type: contentType || "application/octet-stream" }), fileName);
+    return this.request<InfinityAttachment>("POST", `/workspaces/${workspaceId}/attachments/file`, form);
+  }
+
+  async listViews(
+    workspaceId: string,
+    boardId: string,
+    params: PaginationInput & { folder_id?: string } = {},
+  ): Promise<InfinityPage<InfinityView>> {
+    return this.list<InfinityView>(`/workspaces/${workspaceId}/boards/${boardId}/views`, params);
+  }
+
+  async getView(workspaceId: string, boardId: string, viewId: string): Promise<InfinityView> {
+    return this.request<InfinityView>("GET", `/workspaces/${workspaceId}/boards/${boardId}/views/${viewId}`);
+  }
+
+  async createView(workspaceId: string, boardId: string, body: ViewBody): Promise<InfinityView> {
+    return this.request<InfinityView>("POST", `/workspaces/${workspaceId}/boards/${boardId}/views`, body);
+  }
+
+  async updateView(workspaceId: string, boardId: string, viewId: string, body: ViewBody): Promise<InfinityView> {
+    return this.request<InfinityView>("PUT", `/workspaces/${workspaceId}/boards/${boardId}/views/${viewId}`, body);
+  }
+
+  async deleteView(workspaceId: string, boardId: string, viewId: string): Promise<InfinityView> {
+    return this.request<InfinityView>("DELETE", `/workspaces/${workspaceId}/boards/${boardId}/views/${viewId}`);
+  }
+
+  async createReference(workspaceId: string, boardId: string, body: ReferenceBody): Promise<InfinityReference> {
+    return this.request<InfinityReference>("POST", `/workspaces/${workspaceId}/boards/${boardId}/references`, body);
+  }
+
+  async deleteReference(workspaceId: string, boardId: string, referenceId: string): Promise<InfinityReference> {
+    return this.request<InfinityReference>("DELETE", `/workspaces/${workspaceId}/boards/${boardId}/references/${referenceId}`);
+  }
+
+  async listHooks(workspaceId: string, boardId: string, params: PaginationInput = {}): Promise<InfinityPage<InfinityHook>> {
+    return this.list<InfinityHook>(`/workspaces/${workspaceId}/boards/${boardId}/hooks`, params);
+  }
+
+  async createHook(workspaceId: string, boardId: string, body: HookBody): Promise<InfinityHook> {
+    return this.request<InfinityHook>("POST", `/workspaces/${workspaceId}/boards/${boardId}/hooks`, body);
+  }
+
+  async updateHook(workspaceId: string, boardId: string, hookId: string, body: HookBody): Promise<InfinityHook> {
+    return this.request<InfinityHook>("PUT", `/workspaces/${workspaceId}/boards/${boardId}/hooks/${hookId}`, body);
+  }
+
+  async deleteHook(workspaceId: string, boardId: string, hookId: string): Promise<InfinityHook> {
+    return this.request<InfinityHook>("DELETE", `/workspaces/${workspaceId}/boards/${boardId}/hooks/${hookId}`);
+  }
+
+  async createTimeEntry(workspaceId: string, boardId: string, body: TimeEntryBody): Promise<InfinityTimeEntry> {
+    return this.request<InfinityTimeEntry>("POST", `/workspaces/${workspaceId}/boards/${boardId}/time-tracking`, body);
+  }
+
+  async updateTimeEntry(
+    workspaceId: string,
+    boardId: string,
+    timeEntryId: string,
+    body: TimeEntryBody,
+  ): Promise<InfinityTimeEntry> {
+    return this.request<InfinityTimeEntry>("PUT", `/workspaces/${workspaceId}/boards/${boardId}/time-tracking/${timeEntryId}`, body);
+  }
+
+  async deleteTimeEntry(workspaceId: string, boardId: string, timeEntryId: string): Promise<InfinityTimeEntry> {
+    return this.request<InfinityTimeEntry>("DELETE", `/workspaces/${workspaceId}/boards/${boardId}/time-tracking/${timeEntryId}`);
+  }
+
   private async list<T>(path: string, params: PaginationInput & { folder_id?: string } = {}): Promise<InfinityPage<T>> {
     const response = await this.request<InfinityPage<T>>("GET", path, undefined, {
       limit: DEFAULT_LIMIT,
@@ -219,6 +311,9 @@ export class InfinityClient {
   ): Promise<T> {
     try {
       const config: AxiosRequestConfig = { method, url, data, params: removeEmptyParams(params) };
+      if (data instanceof FormData) {
+        delete (config.headers as Record<string, string> | undefined)?.["Content-Type"];
+      }
       const response = await this.http.request<T>(config);
       return response.data;
     } catch (error) {

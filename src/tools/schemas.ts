@@ -18,6 +18,10 @@ export const FolderIdSchema = z.string().min(1).describe("Infinity folder ID.");
 export const ItemIdSchema = z.string().min(1).describe("Infinity item ID.");
 export const AttributeIdSchema = z.string().min(1).describe("Infinity attribute ID.");
 export const CommentIdSchema = z.string().min(1).describe("Infinity comment ID.");
+export const ViewIdSchema = z.string().min(1).describe("Infinity view ID.");
+export const ReferenceIdSchema = z.string().min(1).describe("Infinity reference ID.");
+export const HookIdSchema = z.string().min(1).describe("Infinity hook ID.");
+export const TimeEntryIdSchema = z.string().min(1).describe("Infinity time entry ID.");
 
 export const JsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(JsonValueSchema), z.record(JsonValueSchema)]),
@@ -79,4 +83,30 @@ export const AttributeBodySchema = {
     .describe("Infinity attribute type."),
   default_data: JsonValueSchema.optional().describe("Default value for the attribute type."),
   settings: z.record(JsonValueSchema).optional().describe("Attribute settings. Shape depends on attribute type."),
+};
+
+export const ViewBodySchema = {
+  folder_id: FolderIdSchema.optional().describe("Folder that owns the view."),
+  name: z.string().min(1).optional().describe("View name."),
+  type: z.string().min(1).optional().describe("Infinity view type, for example list, table, calendar, or column."),
+  sort_order: z.string().optional().describe("Infinity sort_order value."),
+  settings: z.record(JsonValueSchema).optional().describe("View configuration, such as filters, sorting, visible attributes, and layout settings."),
+};
+
+export const HookEventSchema = z.object({
+  event: z.string().min(1).describe("Infinity event name, for example comment.created or value.updated."),
+  data: JsonValueSchema.optional().describe("Optional event-specific metadata."),
+}).strict();
+
+export const HookBodySchema = {
+  url: z.string().url().optional().describe("HTTPS endpoint that receives webhook events."),
+  events: z.array(HookEventSchema).optional().describe("Webhook events to subscribe to."),
+};
+
+export const TimeEntryBodySchema = {
+  item_id: ItemIdSchema.optional().describe("Item ID for the time entry. Required when creating."),
+  attribute_id: AttributeIdSchema.optional().describe("Time-tracking attribute ID. Required when creating."),
+  started_at: z.string().datetime().nullable().optional().describe("ISO 8601 start timestamp, or null."),
+  ended_at: z.string().datetime().nullable().optional().describe("ISO 8601 end timestamp, or null."),
+  description: z.string().nullable().optional().describe("Optional time-entry description, or null."),
 };

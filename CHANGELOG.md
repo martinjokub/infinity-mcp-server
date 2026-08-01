@@ -2,6 +2,12 @@
 
 All entry timestamps use GMT+0/UTC.
 
+## 0.2.0 - 2026-08-01 00:00 UTC
+
+- Add explicit item attribute-value extraction tools.
+- Add documented attachment upload, view, reference, webhook, and time-tracking tools.
+- Add an OpenAPI operation-to-tool coverage audit script.
+
 ## 0.1.9 - 2026-06-06 21:40 UTC
 
 - Add an OAuth-only tool allowlist so ChatGPT custom apps can be restricted to safe read/comment tools.

@@ -88,8 +88,11 @@ export interface AttributeBody {
 }
 
 export interface InfinityValue {
-  attribute_id: string;
+  object?: "value";
+  attribute_id?: string;
   data: JsonValue;
+  attribute?: InfinityAttribute;
+  deleted?: boolean;
 }
 
 export interface InfinityItem {
@@ -134,6 +137,82 @@ export interface ItemBody {
 export interface CommentBody {
   text?: string;
   parent_id?: string | null;
+}
+
+export interface InfinityAttachment {
+  id: number;
+  object: "attachment";
+  link?: string;
+  original_name?: string;
+  filesize?: number;
+  created_at?: string;
+  deleted?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ViewBody {
+  folder_id?: string;
+  name?: string;
+  type?: string;
+  sort_order?: string;
+  settings?: JsonObject;
+}
+
+export interface InfinityView extends ViewBody {
+  id: string;
+  object: "folderview";
+  created_by?: number;
+  created_at?: string | null;
+  deleted?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ReferenceBody {
+  attribute_id: string;
+  from_item_id: string;
+  to_item_id: string;
+}
+
+export interface InfinityReference extends ReferenceBody {
+  id: string;
+  object: "reference";
+  [key: string]: unknown;
+}
+
+export interface HookEvent {
+  event: string;
+  data?: JsonValue;
+}
+
+export interface HookBody {
+  url?: string;
+  events?: HookEvent[];
+}
+
+export interface InfinityHook extends HookBody {
+  id: string;
+  object: "hook";
+  user_id?: number;
+  board_id?: string;
+  secret?: string;
+  created_at?: string;
+  deleted?: boolean;
+  [key: string]: unknown;
+}
+
+export interface TimeEntryBody {
+  item_id?: string;
+  attribute_id?: string;
+  started_at?: string | null;
+  ended_at?: string | null;
+  description?: string | null;
+}
+
+export interface InfinityTimeEntry extends TimeEntryBody {
+  id: string;
+  object: "time_entry";
+  created_by?: number;
+  [key: string]: unknown;
 }
 
 export interface PaginationInput {

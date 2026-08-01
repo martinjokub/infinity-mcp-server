@@ -2,7 +2,7 @@
 
 MCP server for agents that need to read and write StartInfinity data.
 
-Current version: `0.1.9`
+Current version: `0.2.0`
 
 Changelog:
 
@@ -177,7 +177,7 @@ services:
       - MCP_USERS_FILE=/app/config/mcp-users.json
       - MCP_CREDENTIAL_STORE_FILE=/app/data/credentials.enc.json
       - OAUTH_TOKEN_STORE_FILE=/app/data/oauth-tokens.json
-      - OAUTH_ALLOWED_TOOLS=infinity_get_profile,infinity_list_workspaces,infinity_list_boards,infinity_get_board,infinity_list_folders,infinity_get_folder,infinity_list_attributes,infinity_get_attribute,infinity_list_items,infinity_get_item,infinity_list_subitems,infinity_list_comments,infinity_get_comment,infinity_add_item_comment
+      - OAUTH_ALLOWED_TOOLS=all
     ports:
       - "127.0.0.1:3015:3000"
     volumes:
@@ -212,12 +212,12 @@ OAUTH_CLIENT_SECRET=replace-with-oauth-client-secret
 OAUTH_ALLOWED_REDIRECT_ORIGINS=https://chatgpt.com,https://chat.openai.com
 OAUTH_MCP_USER=codex
 OAUTH_TOKEN_STORE_FILE=/app/data/oauth-tokens.json
-OAUTH_ALLOWED_TOOLS=infinity_get_profile,infinity_list_workspaces,infinity_list_boards,infinity_get_board,infinity_list_folders,infinity_get_folder,infinity_list_attributes,infinity_get_attribute,infinity_list_items,infinity_get_item,infinity_list_subitems,infinity_list_comments,infinity_get_comment,infinity_add_item_comment
+OAUTH_ALLOWED_TOOLS=all
 ```
 
 `OAUTH_TOKEN_STORE_FILE` stores OAuth access token hashes so ChatGPT custom app sessions can survive container rebuilds and restarts. Raw OAuth access tokens are not written to disk.
 
-`OAUTH_ALLOWED_TOOLS` optionally limits the tools shown to OAuth clients. Static MCP API keys still see the full tool set.
+`OAUTH_ALLOWED_TOOLS` optionally limits the tools shown to OAuth clients. Set it to `all`, `full`, or `*` to expose the full registered tool set for trusted ChatGPT custom apps, including create, update, archive/delete, comment, and workspace member tools. Static MCP API keys also see the full tool set.
 
 Then configure the external MCP client with:
 
@@ -282,32 +282,61 @@ http://127.0.0.1:3015/health
 
 ## Tools
 
+### Profile
+
 - `infinity_get_profile`
+
+### Workspaces And Members
+
 - `infinity_list_workspaces`
 - `infinity_list_workspace_members`
 - `infinity_invite_workspace_member`
 - `infinity_add_workspace_member`
 - `infinity_remove_workspace_member`
+
+### Boards
+
 - `infinity_list_boards`
 - `infinity_get_board`
 - `infinity_create_board`
+
+### Folders
+
 - `infinity_list_folders`
+- `infinity_list_folders_simple`
 - `infinity_get_folder`
 - `infinity_create_folder`
+- `infinity_create_folder_simple`
+- `infinity_add_folder_confirmed`
 - `infinity_update_folder`
 - `infinity_archive_folder`
+
+### Attributes
+
 - `infinity_list_attributes`
 - `infinity_get_attribute`
 - `infinity_create_attribute`
 - `infinity_update_attribute`
 - `infinity_delete_attribute`
+
+### Items And Attribute Values
+
 - `infinity_list_items`
+- `infinity_list_items_simple`
 - `infinity_get_item`
+- `infinity_get_item_values`
+- `infinity_get_item_attribute_value`
+- `infinity_list_item_values`
 - `infinity_create_item`
+- `infinity_create_item_simple`
+- `infinity_add_task_confirmed`
 - `infinity_update_item`
 - `infinity_archive_item`
 - `infinity_list_subitems`
 - `infinity_create_subitem`
+
+### Comments
+
 - `infinity_list_comments`
 - `infinity_get_comment`
 - `infinity_create_comment`
@@ -315,10 +344,44 @@ http://127.0.0.1:3015/health
 - `infinity_update_comment`
 - `infinity_delete_comment`
 
-Documented Infinity API areas not yet exposed as MCP tools:
+### Attachments
 
-- Attachments
-- Views
-- References
-- Hooks
-- Time tracking
+- `infinity_upload_attachment_from_url`
+- `infinity_upload_attachment_from_base64`
+
+### Views
+
+- `infinity_list_views`
+- `infinity_get_view`
+- `infinity_create_view`
+- `infinity_update_view`
+- `infinity_delete_view`
+
+### References
+
+- `infinity_create_reference`
+- `infinity_delete_reference`
+
+### Hooks
+
+- `infinity_list_hooks`
+- `infinity_create_hook`
+- `infinity_update_hook`
+- `infinity_delete_hook`
+
+### Time Tracking
+
+- `infinity_create_time_entry`
+- `infinity_update_time_entry`
+- `infinity_delete_time_entry`
+
+## OpenAPI Coverage Audit
+
+Run this after upgrading the Infinity API version or changing tools:
+
+```powershell
+npm run build
+npm run audit:openapi
+```
+
+It downloads the configured Infinity OpenAPI specification and verifies that every documented operation has an MCP tool mapping.
